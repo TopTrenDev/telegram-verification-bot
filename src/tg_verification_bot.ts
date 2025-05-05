@@ -1,6 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
 
-const token = "7688083755:AAHKx_GXFQQZBxFuh0LQ99EZB7Xz9eLjB3I";
+const token = "Your_Bot's_Token";
 const bot = new TelegramBot(token, { polling: true });
 const userPendingVerification: Record<number, string> = {}; // chatId → userInput
 
