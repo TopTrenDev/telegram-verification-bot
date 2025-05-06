@@ -10,10 +10,9 @@ bot.onText(/\/start/, (msg) => {
   const message = `👋 Welcome, ${msg.from?.first_name || "friend"}! 
   To join this exclusive crypto channel, please complete the following steps:
   
-  <b>Step 1</b>: Register with BloFin
   <b>Step 1</b>: Register with Photon
-  <b>Step 1</b>: Insert your Email Address
-  <b>Step 1</b>: Gain Instant Access
+  <b>Step 2</b>: Verify with Photon
+  <b>Step 3</b>: Gain Instant Access
   
   Watch the video below to understand how to join Gem Hunters Lite. Then click "Start Verification" to open the in app browser.
   
@@ -25,7 +24,7 @@ bot.onText(/\/start/, (msg) => {
       inline_keyboard: [
         [
           {
-            text: "🚀 Join Gem Hunters",
+            text: "🚀 Start Verification",
             callback_data: "join_clicked",
           },
         ],
@@ -37,44 +36,16 @@ bot.onText(/\/start/, (msg) => {
 });
 
 bot.on("message", (msg) => {
-  const chatId = msg.chat.id;
-  const text = msg.text?.trim();
-
-  // Ignore commands (like /start) and empty messages
-  if (!text || text.startsWith("/")) return;
-
-  if (isValidEmail(text)) {
-    // Save email if needed
-    userPendingVerification[chatId] = text;
-
-    bot.sendMessage(
-      chatId,
-      `📧 You entered a valid email: <b>${text}</b>\nNow click "Verify Email" to continue.`,
-      {
-        parse_mode: "HTML",
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "✅ Verify Email", callback_data: "verify_email" }],
-          ],
-        },
-      }
-    );
-  } else {
-    // Save as a potential BloFin/Photon ID
-    userPendingVerification[chatId] = text;
-
-    bot.sendMessage(
-      chatId,
-      `🆔 You entered: <b>${text}</b>\nNow click "Verify ID" to verify it.`,
-      {
-        parse_mode: "HTML",
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "✅ Verify ID", callback_data: "verify_id" }],
-          ],
-        },
-      }
-    );
+  if (msg.web_app_data?.data) {
+    const data = JSON.parse(msg.web_app_data.data);
+    if (data.status === "verified") {
+      bot.sendMessage(msg.chat.id, "✅ You are verified as a Photon user!");
+    } else {
+      bot.sendMessage(
+        msg.chat.id,
+        "❌ You are not verified. Please sign up on Photon."
+      );
+    }
   }
 });
 
@@ -89,77 +60,24 @@ bot.on("callback_query", (query) => {
 
     bot.sendMessage(
       chatId!,
-      `First step: Register with BloFin
-
-      1. Click "Sign up" button to sign up BloFin.
-      2. Please sign up BloFin site.
-      3. Copy your user ID from BloFin.
-      4. Click "Verify" button and verify with your ID.`,
+      `First step: Register with Photon
+      
+      Now register for Photon and verify your account.
+      
+      👇 Click on the button below to proceed.`,
       {
         reply_markup: {
           inline_keyboard: [
             [
               {
-                text: "🔗 Sign Up for BloFin",
-                url: "https://blofin.com/register?redirect=",
-              },
-            ],
-            [
-              {
-                text: "📝 Verify with your BloFin ID",
-                callback_data: "verify_id",
+                text: "➡️ Proceed first step",
+                callback_data: "signup_photon",
               },
             ],
           ],
         },
       }
     );
-  }
-
-  if (data === "verify_id") {
-    bot.answerCallbackQuery(query.id);
-
-    const userInput = userPendingVerification[chatId];
-
-    if (!userInput) {
-      return bot.sendMessage(
-        chatId,
-        "Please input your digit ID as a message first."
-      );
-    }
-
-    const isValid = verifyBlofinUser(userInput);
-
-    if (isValid) {
-      bot.sendMessage(
-        chatId,
-        `✅ <b>Blofin Verification successful!</b>\n
-        Now register for Photon and verify your account
-        
-        👇 Click on the button below to proceed`,
-        {
-          parse_mode: "HTML",
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: "➡️ Proceed to next step",
-                  callback_data: "signup_photon",
-                },
-              ],
-            ],
-          },
-        }
-      );
-    } else {
-      bot.sendMessage(
-        chatId,
-        `❌ <b>Verification failed.</b>\nThe ID must be exact. Please check your ID and try again.`,
-        {
-          parse_mode: "HTML",
-        }
-      );
-    }
   }
 
   if (data === "signup_photon") {
@@ -184,7 +102,7 @@ bot.on("callback_query", (query) => {
             [
               {
                 text: "📝 Verify with your Photon",
-                callback_data: "verify_photon",
+                web_app: { url: "https://my-photon-checker.vercel.app" },
               },
             ],
           ],
@@ -205,50 +123,14 @@ bot.on("callback_query", (query) => {
           inline_keyboard: [
             [
               {
-                text: "➡️ Proceed to Email Confirmation",
-                callback_data: "verify_email",
+                text: "🚀 Join Gem Hunter group",
+                callback_data: "registration",
               },
             ],
           ],
         },
       }
     );
-  }
-
-  if (data === "verify_email") {
-    bot.answerCallbackQuery(query.id);
-
-    const email = userPendingVerification[chatId!];
-
-    if (!email) {
-      return bot.sendMessage(chatId, "Please input your email first.");
-    }
-
-    if (isValidEmail(email)) {
-      bot.sendMessage(
-        chatId!,
-        `✅ <b>Email Confirmation Successful!</b>
-
-        Your email <b>${email}</b> has been confirmed successfully! Proceed to the last step to get your invite link
-        
-        👇 Click on the button below to proceed`,
-        {
-          parse_mode: "HTML",
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: "➡️ Proceed to Final Step",
-                  callback_data: "registration",
-                },
-              ],
-            ],
-          },
-        }
-      );
-    } else {
-      bot.sendMessage(chatId!, "Please enter a correct email address.");
-    }
   }
 
   if (data === "registration") {
@@ -285,7 +167,7 @@ bot.on("callback_query", (query) => {
       chatId!,
       "https://gemhunters.co/images/get-access-left_1get-access-left.webp",
       {
-        caption: "<b>GEM HUNTERS</b>\n\n",
+        caption: "<b>GEM HUNTERS</b>",
         parse_mode: "HTML",
         reply_markup: {
           inline_keyboard: [
