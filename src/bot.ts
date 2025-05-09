@@ -10,13 +10,13 @@ bot.onText(/\/start/, (msg) => {
     msg.chat.id,
     `👋 <b>Welcome, ${msg.from?.first_name || "friend"}! </b>
 
-To join this exclusive crypto channel, please complete these steps:
+To join our Malikonchain crypto channel, please complete these steps:
 
 1️⃣ Register with Photon  
 
 2️⃣ Verify here  
 
-3️⃣ Join the Telegram Channel
+3️⃣ Join our Telegram Channel
 `,
     {
       parse_mode: "HTML",
